@@ -23,7 +23,7 @@ class PWM(object):
         self.blocking = blocking
         
     def __del__(self):
-        sleep(.5)
+        sleep(.1)
         GPIO.cleanup()
     
     # Updates duty cycle
@@ -44,9 +44,16 @@ class PWM(object):
         
     # Updates cycle time
     def __set_cycle_time(self):
-        self.cycle_time = 1.0/self.frequency
-        self.on_time = self.cycle_time * self.duty_cycle
-        self.off_time = self.cycle_time - self.on_time
+        if self.duty_cycle == 0:
+            self.cycle_time = self.off_time = .01
+            self.on_time = 0
+        elif self.frequency == 0:
+            self.cycle_time = self.on_time = .01
+            self.off_time = 0
+        else:
+            self.cycle_time = 1.0/self.frequency
+            self.on_time = self.cycle_time * self.duty_cycle
+            self.off_time = self.cycle_time - self.on_time
         
     # PWM Function
     # Multiple instances run concurrently
@@ -60,7 +67,8 @@ class PWM(object):
     # Sets a timer, turn off after 'secs' seconds
     def __timer(self,secs):
         self.l.acquire()
-        self.on = True
+        if self.frequency > 0 and self.duty_cycle > 0:
+            self.on = True
         self.thr = Thread(target=self.__go)
         self.thr.start()
         sleep(secs)
@@ -87,6 +95,13 @@ class PWM(object):
     # Stops the pwm pin
     def stop(self):
         self.on = False
+        
+    # Send one pulse
+    def pulse(self):
+        GPIO.output(self.pin,1)
+        sleep(self.on_time)
+        GPIO.output(self.pin,0)
+        sleep(self.off_time)
         
         
         
