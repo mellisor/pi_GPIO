@@ -22,6 +22,10 @@ class PWM(object):
         # Whether 'runFor' calls should block program execution
         self.blocking = blocking
         
+    def __del__(self):
+        sleep(.5)
+        GPIO.cleanup()
+    
     # Updates duty cycle
     def set_duty_cycle(self,cycle,update=True):
         if type(cycle) != float and type(cycle) != int or cycle < 0 or cycle > 1:
@@ -54,7 +58,6 @@ class PWM(object):
             sleep(self.off_time)
             
     # Sets a timer, turn off after 'secs' seconds
-    # Runs sequentially
     def __timer(self,secs):
         self.l.acquire()
         self.on = True
@@ -65,12 +68,15 @@ class PWM(object):
         self.l.release()
     
     # Runs indefinitely
+    # Multiple instances run concurrently, not recommended to do so
     def run(self):
         self.on = True
         self.thr = Thread(target=self.__go)
         self.thr.start()
         
     # Runs for a certain amount of time
+    # Multiple instances run sequentially
+    # If the frequency or duty cycle need to be updated between calls, blocking should be set to True
     def runFor(self,secs):
         if self.blocking:
             self.__timer(secs)
