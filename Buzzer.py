@@ -11,11 +11,7 @@ class Buzzer(PWM.PWM):
     def play(self,freq):
         self.set_frequency(freq)
         self.run()
-        
-    # Stops playing the current note
-    def stop(self):
-        self.stop()
-        
+
     # Plays a note for a certain amount of time
     def playFor(self,freq,secs):
         if freq == 0:
